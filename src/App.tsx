@@ -457,6 +457,7 @@ function App() {
                     word={getCurrentWord(2)}
                     team={2}
                     isActive={gameState.currentTeam === 2}
+                    forceShow={true}
                   />
                 </div>
               </div>
