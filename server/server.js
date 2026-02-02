@@ -52,9 +52,9 @@ const gameState = {
 let timer1 = null;
 let timer2 = null;
 
-// Letras del rosco (27 letras incluyendo Ñ, CH, LL)
+// Letras del rosco (27 letras incluyendo Ñ)
 const LETTERS = [
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'LL', 'M',
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
   'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
 ];
 

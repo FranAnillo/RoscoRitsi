@@ -10,7 +10,7 @@ interface RoscoProps {
 }
 
 const LETTERS = [
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'LL', 'M',
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
   'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
 ];
 
@@ -42,8 +42,8 @@ export function Rosco({ words, currentLetterIndex, team, isActive, size = 'large
       case 'passed':
         return 'bg-yellow-500 text-white border-yellow-600';
       case 'current':
-        return team === 1 
-          ? 'bg-blue-500 text-white border-blue-600 animate-pulse ring-4 ring-blue-300' 
+        return team === 1
+          ? 'bg-blue-500 text-white border-blue-600 animate-pulse ring-4 ring-blue-300'
           : 'bg-orange-500 text-white border-orange-600 animate-pulse ring-4 ring-orange-300';
       default:
         return 'bg-white text-gray-700 border-gray-300';
