@@ -4,6 +4,7 @@ export interface WordItem {
   letter: string;
   word: string;
   definition: string;
+  type: 'starts' | 'contains';
   status: 'pending' | 'correct' | 'wrong' | 'passed';
 }
 
@@ -29,6 +30,7 @@ export interface GameState {
 export interface RoscoInput {
   word: string;
   definition: string;
+  type: 'starts' | 'contains';
 }
 
 export type UserRole = 'admin' | 'player1' | 'player2' | 'spectator';

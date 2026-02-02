@@ -6,12 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { Play, RotateCcw, Plus, Trash2, CheckCircle } from 'lucide-react';
+import Papa from 'papaparse';
 import { LETTERS } from '@/types/game';
-
-interface RoscoInput {
-  word: string;
-  definition: string;
-}
+import type { RoscoInput } from '@/types/game';
 
 interface AdminPanelProps {
   onCreateRosco: (rosco1: RoscoInput[], rosco2: RoscoInput[]) => void;
@@ -21,20 +18,20 @@ interface AdminPanelProps {
 
 export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPanelProps) {
   const [rosco1, setRosco1] = useState<RoscoInput[]>(
-    LETTERS.map(() => ({ word: '', definition: '' }))
+    LETTERS.map(() => ({ word: '', definition: '', type: 'starts' }))
   );
   const [rosco2, setRosco2] = useState<RoscoInput[]>(
-    LETTERS.map(() => ({ word: '', definition: '' }))
+    LETTERS.map(() => ({ word: '', definition: '', type: 'starts' }))
   );
   const [activeTab, setActiveTab] = useState<'team1' | 'team2'>('team1');
 
-  const updateRosco1 = (index: number, field: keyof RoscoInput, value: string) => {
+  const updateRosco1 = (index: number, field: keyof RoscoInput, value: any) => {
     const newRosco = [...rosco1];
     newRosco[index] = { ...newRosco[index], [field]: value };
     setRosco1(newRosco);
   };
 
-  const updateRosco2 = (index: number, field: keyof RoscoInput, value: string) => {
+  const updateRosco2 = (index: number, field: keyof RoscoInput, value: any) => {
     const newRosco = [...rosco2];
     newRosco[index] = { ...newRosco[index], [field]: value };
     setRosco2(newRosco);
@@ -44,104 +41,141 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
     // Validar que todas las palabras tengan contenido
     const validRosco1 = rosco1.filter(item => item.word.trim() && item.definition.trim());
     const validRosco2 = rosco2.filter(item => item.word.trim() && item.definition.trim());
-    
+
     if (validRosco1.length < LETTERS.length || validRosco2.length < LETTERS.length) {
       alert(`Debes completar todas las ${LETTERS.length} letras para cada equipo`);
       return;
     }
-    
+
     onCreateRosco(validRosco1, validRosco2);
   };
 
   const fillExampleData = () => {
-    const exampleWords1 = [
-      { word: 'ÁRBOL', definition: 'Planta de tronco leñoso que se ramifica a cierta altura del suelo' },
-      { word: 'BARCO', definition: 'Embarcación de gran tamaño para navegar' },
-      { word: 'CASA', definition: 'Edificio para habitar' },
-      { word: 'DEDO', definition: 'Cada uno de los cinco apéndices de la mano' },
-      { word: 'ELEFANTE', definition: 'Mamífero paquidermo de gran tamaño con trompa' },
-      { word: 'FLOR', definition: 'Órgano reproductor de las plantas' },
-      { word: 'GATO', definition: 'Mamífero felino doméstico' },
-      { word: 'HOGAR', definition: 'Lugar donde vive una persona' },
-      { word: 'ISLA', definition: 'Porción de tierra rodeada de agua' },
-      { word: 'JARDÍN', definition: 'Terreno donde se cultivan plantas' },
-      { word: 'KOALA', definition: 'Marsupial australiano que vive en los eucaliptos' },
-      { word: 'LUNA', definition: 'Satélite natural de la Tierra' },
-      { word: 'LLAVE', definition: 'Instrumento para abrir cerraduras' },
-      { word: 'MESA', definition: 'Mueble con patas y una superficie plana' },
-      { word: 'NIÑO', definition: 'Persona de poca edad' },
-      { word: 'ÑANDÚ', definition: 'Ave corredora sudamericana' },
-      { word: 'OSO', definition: 'Mamífero carnívoro de gran tamaño' },
-      { word: 'PERRO', definition: 'Mamífero doméstico, mejor amigo del hombre' },
-      { word: 'QUESO', definition: 'Producto lácteo sólido' },
-      { word: 'RATÓN', definition: 'Roedor de pequeño tamaño' },
-      { word: 'SOL', definition: 'Estrella que ilumina la Tierra' },
-      { word: 'TIGRE', definition: 'Felino salvaje de rayas naranjas' },
-      { word: 'UVA', definition: 'Fruto de la vid' },
-      { word: 'VACA', definition: 'Mamífero rumiante que produce leche' },
-      { word: 'WHISKY', definition: 'Bebida alcohólica destilada' },
-      { word: 'XILÓFONO', definition: 'Instrumento musical de percusión' },
-      { word: 'YATE', definition: 'Embarcación de recreo' },
-      { word: 'ZORRO', definition: 'Mamífero carnívoro de cola abundante' },
+    const exampleWords1: RoscoInput[] = [
+      { word: 'ÁRBOL', definition: 'Planta de tronco leñoso que se ramifica a cierta altura del suelo', type: 'starts' },
+      { word: 'BARCO', definition: 'Embarcación de gran tamaño para navegar', type: 'starts' },
+      { word: 'CASA', definition: 'Edificio para habitar', type: 'starts' },
+      { word: 'DEDO', definition: 'Cada uno de los cinco apéndices de la mano', type: 'starts' },
+      { word: 'ELEFANTE', definition: 'Mamífero paquidermo de gran tamaño con trompa', type: 'starts' },
+      { word: 'FLOR', definition: 'Órgano reproductor de las plantas', type: 'starts' },
+      { word: 'GATO', definition: 'Mamífero felino doméstico', type: 'starts' },
+      { word: 'HOGAR', definition: 'Lugar donde vive una persona', type: 'starts' },
+      { word: 'ISLA', definition: 'Porción de tierra rodeada de agua', type: 'starts' },
+      { word: 'JARDÍN', definition: 'Terreno donde se cultivan plantas', type: 'starts' },
+      { word: 'KOALA', definition: 'Marsupial australiano que vive en los eucaliptos', type: 'starts' },
+      { word: 'LUNA', definition: 'Satélite natural de la Tierra', type: 'starts' },
+      { word: 'LLAVE', definition: 'Instrumento para abrir cerraduras', type: 'starts' },
+      { word: 'MESA', definition: 'Mueble con patas y una superficie plana', type: 'starts' },
+      { word: 'NIÑO', definition: 'Persona de poca edad', type: 'starts' },
+      { word: 'ÑANDÚ', definition: 'Ave corredora sudamericana', type: 'starts' },
+      { word: 'OSO', definition: 'Mamífero carnívoro de gran tamaño', type: 'starts' },
+      { word: 'PERRO', definition: 'Mamífero doméstico, mejor amigo del hombre', type: 'starts' },
+      { word: 'QUESO', definition: 'Producto lácteo sólido', type: 'starts' },
+      { word: 'RATÓN', definition: 'Roedor de pequeño tamaño', type: 'starts' },
+      { word: 'SOL', definition: 'Estrella que ilumina la Tierra', type: 'starts' },
+      { word: 'TIGRE', definition: 'Felino salvaje de rayas naranjas', type: 'starts' },
+      { word: 'UVA', definition: 'Fruto de la vid', type: 'starts' },
+      { word: 'VACA', definition: 'Mamífero rumiante que produce leche', type: 'starts' },
+      { word: 'WHISKY', definition: 'Bebida alcohólica destilada', type: 'starts' },
+      { word: 'XILÓFONO', definition: 'Instrumento musical de percusión', type: 'starts' },
+      { word: 'YATE', definition: 'Embarcación de recreo', type: 'starts' },
+      { word: 'ZORRO', definition: 'Mamífero carnívoro de cola abundante', type: 'starts' },
     ];
 
-    const exampleWords2 = [
-      { word: 'AMIGO', definition: 'Persona con quien se tiene una relación de afecto' },
-      { word: 'BICICLETA', definition: 'Vehículo de dos ruedas movido por pedales' },
-      { word: 'CIELO', definition: 'Espacio que rodea la Tierra' },
-      { word: 'DINERO', definition: 'Medio de cambio para adquirir bienes' },
-      { word: 'ESPEJO', definition: 'Superficie que refleja las imágenes' },
-      { word: 'FUEGO', definition: 'Combustión que desprende luz y calor' },
-      { word: 'GUITARRA', definition: 'Instrumento musical de cuerdas' },
-      { word: 'HÉROE', definition: 'Persona que realiza hazañas' },
-      { word: 'IGLESIA', definition: 'Edificio para el culto religioso' },
-      { word: 'JUEGO', definition: 'Actividad recreativa con reglas' },
-      { word: 'KIWI', definition: 'Fruta de piel marrón y pulpa verde' },
-      { word: 'LIBRO', definition: 'Conjunto de hojas con texto impreso' },
-      { word: 'LLUVIA', definition: 'Precipitación de agua del cielo' },
-      { word: 'MONTAÑA', definition: 'Gran elevación del terreno' },
-      { word: 'NUBE', definition: 'Masa visible de vapor de agua' },
-      { word: 'ÑOQUI', definition: 'Pasta italiana hecha de patata' },
-      { word: 'OCÉANO', definition: 'Gran extensión de agua salada' },
-      { word: 'PIANO', definition: 'Instrumento musical de teclas' },
-      { word: 'QUINTO', definition: 'Número ordinal que sigue al cuarto' },
-      { word: 'RÍO', definition: 'Corriente natural de agua' },
-      { word: 'SILLA', definition: 'Asiento con respaldo y patas' },
-      { word: 'TELÉFONO', definition: 'Aparato para comunicarse a distancia' },
-      { word: 'UNIVERSO', definition: 'Conjunto de todo lo existente' },
-      { word: 'VIOLÍN', definition: 'Instrumento musical de cuerdas frotadas' },
-      { word: 'WATERPOLO', definition: 'Deporte acuático con balón' },
-      { word: 'XENÓFOBO', definition: 'Persona que teme lo extranjero' },
-      { word: 'YOGUR', definition: 'Producto lácteo fermentado' },
-      { word: 'ZAPATO', definition: 'Calzado que cubre el pie' },
+    const exampleWords2: RoscoInput[] = [
+      { word: 'AMIGO', definition: 'Persona con quien se tiene una relación de afecto', type: 'starts' },
+      { word: 'BICICLETA', definition: 'Vehículo de dos ruedas movido por pedales', type: 'starts' },
+      { word: 'CIELO', definition: 'Espacio que rodea la Tierra', type: 'starts' },
+      { word: 'DINERO', definition: 'Medio de cambio para adquirir bienes', type: 'starts' },
+      { word: 'ESPEJO', definition: 'Superficie que refleja las imágenes', type: 'starts' },
+      { word: 'FUEGO', definition: 'Combustión que desprende luz y calor', type: 'starts' },
+      { word: 'GUITARRA', definition: 'Instrumento musical de cuerdas', type: 'starts' },
+      { word: 'HÉROE', definition: 'Persona que realiza hazañas', type: 'starts' },
+      { word: 'IGLESIA', definition: 'Edificio para el culto religioso', type: 'starts' },
+      { word: 'JUEGO', definition: 'Actividad recreativa con reglas', type: 'starts' },
+      { word: 'KIWI', definition: 'Fruta de piel marrón y pulpa verde', type: 'starts' },
+      { word: 'LIBRO', definition: 'Conjunto de hojas con texto impreso', type: 'starts' },
+      { word: 'LLUVIA', definition: 'Precipitación de agua del cielo', type: 'starts' },
+      { word: 'MONTAÑA', definition: 'Gran elevación del terreno', type: 'starts' },
+      { word: 'NUBE', definition: 'Masa visible de vapor de agua', type: 'starts' },
+      { word: 'ÑOQUI', definition: 'Pasta italiana hecha de patata', type: 'starts' },
+      { word: 'OCÉANO', definition: 'Gran extensión de agua salada', type: 'starts' },
+      { word: 'PIANO', definition: 'Instrumento musical de teclas', type: 'starts' },
+      { word: 'QUINTO', definition: 'Número ordinal que sigue al cuarto', type: 'starts' },
+      { word: 'RÍO', definition: 'Corriente natural de agua', type: 'starts' },
+      { word: 'SILLA', definition: 'Asiento con respaldo y patas', type: 'starts' },
+      { word: 'TELÉFONO', definition: 'Aparato para comunicarse a distancia', type: 'starts' },
+      { word: 'UNIVERSO', definition: 'Conjunto de todo lo existente', type: 'starts' },
+      { word: 'VIOLÍN', definition: 'Instrumento musical de cuerdas frotadas', type: 'starts' },
+      { word: 'WATERPOLO', definition: 'Deporte acuático con balón', type: 'starts' },
+      { word: 'XENÓFOBO', definition: 'Persona que teme lo extranjero', type: 'starts' },
+      { word: 'YOGUR', definition: 'Producto lácteo fermentado', type: 'starts' },
+      { word: 'ZAPATO', definition: 'Calzado que cubre el pie', type: 'starts' },
     ];
 
     setRosco1(exampleWords1);
     setRosco2(exampleWords2);
   };
 
-  const clearAll = () => {
-    setRosco1(LETTERS.map(() => ({ word: '', definition: '' })));
-    setRosco2(LETTERS.map(() => ({ word: '', definition: '' })));
+  const handleCsvUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      complete: (results) => {
+        const data = results.data as string[][];
+        const newRosco1 = [...rosco1];
+        const newRosco2 = [...rosco2];
+
+        data.forEach((row) => {
+          if (row.length < 5) return;
+          const [team, letter, type, word, definition] = row.map(s => s.trim());
+          const letterIndex = LETTERS.findIndex(l => l === letter.toUpperCase());
+
+          if (letterIndex === -1) return;
+
+          const item: RoscoInput = {
+            word: word.toUpperCase(),
+            definition,
+            type: type.toLowerCase() === 'contiene' || type.toLowerCase() === 'contains' ? 'contains' : 'starts'
+          };
+
+          if (team === '1') {
+            newRosco1[letterIndex] = item;
+          } else if (team === '2') {
+            newRosco2[letterIndex] = item;
+          }
+        });
+
+        setRosco1(newRosco1);
+        setRosco2(newRosco2);
+      },
+      header: false
+    });
   };
 
-  const RoscoForm = ({ 
-    rosco, 
-    updateRosco, 
-    team 
-  }: { 
-    rosco: RoscoInput[]; 
-    updateRosco: (index: number, field: keyof RoscoInput, value: string) => void;
+  const clearAll = () => {
+    setRosco1(LETTERS.map(() => ({ word: '', definition: '', type: 'starts' })));
+    setRosco2(LETTERS.map(() => ({ word: '', definition: '', type: 'starts' })));
+  };
+
+  const RoscoForm = ({
+    rosco,
+    updateRosco,
+    team
+  }: {
+    rosco: RoscoInput[];
+    updateRosco: (index: number, field: keyof RoscoInput, value: any) => void;
     team: 1 | 2;
   }) => (
     <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
       {LETTERS.map((letter, index) => (
-        <div 
-          key={letter} 
+        <div
+          key={letter}
           className={cn(
             "flex gap-3 p-3 rounded-lg border",
-            team === 1 
-              ? 'bg-blue-50 border-blue-200' 
+            team === 1
+              ? 'bg-blue-50 border-blue-200'
               : 'bg-orange-50 border-orange-200'
           )}
         >
@@ -152,12 +186,22 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
             {letter}
           </div>
           <div className="flex-1 space-y-2">
-            <Input
-              placeholder="Palabra"
-              value={rosco[index]?.word || ''}
-              onChange={(e) => updateRosco(index, 'word', e.target.value.toUpperCase())}
-              className="uppercase"
-            />
+            <div className="flex gap-2">
+              <select
+                value={rosco[index]?.type || 'starts'}
+                onChange={(e) => updateRosco(index, 'type', e.target.value as 'starts' | 'contains')}
+                className="text-xs border rounded px-1 bg-white"
+              >
+                <option value="starts">Empieza por</option>
+                <option value="contains">Contiene</option>
+              </select>
+              <Input
+                placeholder="Palabra"
+                value={rosco[index]?.word || ''}
+                onChange={(e) => updateRosco(index, 'word', e.target.value.toUpperCase())}
+                className="uppercase flex-1"
+              />
+            </div>
             <Textarea
               placeholder="Definición"
               value={rosco[index]?.definition || ''}
@@ -177,18 +221,36 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
         <CardTitle className="flex items-center justify-between">
           <span>Panel de Administrador - Crear Rosco</span>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              disabled={isGameActive}
+            >
+              <label className="cursor-pointer flex items-center">
+                <Plus className="w-4 h-4 mr-1" />
+                Importar CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleCsvUpload}
+                  disabled={isGameActive}
+                />
+              </label>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={fillExampleData}
               disabled={isGameActive}
             >
               <Plus className="w-4 h-4 mr-1" />
               Ejemplos
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={clearAll}
               disabled={isGameActive}
             >
@@ -199,6 +261,10 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 text-xs text-gray-500 bg-gray-50 p-2 rounded border">
+          <p><strong>Formato CSV:</strong> Equipo (1 o 2), Letra, Tipo (empieza/contiene), Palabra, Definición</p>
+          <p>Ejemplo: 1, A, empieza, ÁRBOL, Planta de tronco leñoso...</p>
+        </div>
         {!isGameActive ? (
           <>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'team1' | 'team2')}>
@@ -210,18 +276,18 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
                   Equipo 2
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="team1">
                 <RoscoForm rosco={rosco1} updateRosco={updateRosco1} team={1} />
               </TabsContent>
-              
+
               <TabsContent value="team2">
                 <RoscoForm rosco={rosco2} updateRosco={updateRosco2} team={2} />
               </TabsContent>
             </Tabs>
 
             <div className="mt-6 flex gap-3">
-              <Button 
+              <Button
                 onClick={handleCreateRosco}
                 className="flex-1 bg-green-600 hover:bg-green-700"
                 size="lg"
@@ -240,7 +306,7 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
             <p className="text-gray-600 mb-6">
               El rosco ha sido creado y los equipos están jugando.
             </p>
-            <Button 
+            <Button
               onClick={onResetGame}
               variant="destructive"
               size="lg"
@@ -251,6 +317,6 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
           </div>
         )}
       </CardContent>
-    </Card>
+    </Card >
   );
 }

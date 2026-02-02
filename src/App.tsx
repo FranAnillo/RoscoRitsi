@@ -17,39 +17,39 @@ import { Button } from '@/components/ui/button';
 function App() {
   const [role, setRole] = useState<UserRole | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const { 
-    isConnected, 
-    gameState, 
-    createRosco, 
-    guessWord, 
-    passWord, 
-    resetGame 
+  const {
+    isConnected,
+    gameState,
+    createRosco,
+    guessWord,
+    passWord,
+    resetGame
   } = useSocket();
 
   // Efectos de sonido
   const playSound = (type: 'correct' | 'wrong' | 'pass' | 'win') => {
     if (!soundEnabled) return;
-    
+
     const sounds = {
       correct: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
       wrong: 'https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3',
       pass: 'https://www.soundjay.com/misc/sounds/whoosh.mp3',
       win: 'https://www.soundjay.com/misc/sounds/success-fanfare-trumpets-01.mp3'
     };
-    
+
     const audio = new Audio(sounds[type]);
     audio.volume = 0.5;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { });
   };
 
   // Escuchar eventos de sonido
   useEffect(() => {
     if (!gameState) return;
-    
+
     // Detectar cambios para reproducir sonidos
     const lastWord1 = gameState.rosco1[gameState.team1.currentLetterIndex - 1];
     const lastWord2 = gameState.rosco2[gameState.team2.currentLetterIndex - 1];
-    
+
     if (lastWord1?.status === 'correct' || lastWord2?.status === 'correct') {
       playSound('correct');
     } else if (lastWord1?.status === 'wrong' || lastWord2?.status === 'wrong') {
@@ -57,7 +57,7 @@ function App() {
     } else if (lastWord1?.status === 'passed' || lastWord2?.status === 'passed') {
       playSound('pass');
     }
-    
+
     if (gameState.winner) {
       playSound('win');
     }
@@ -83,7 +83,7 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 p-4">
         <ConnectionStatus isConnected={isConnected} />
-        
+
         <div className="max-w-7xl mx-auto">
           <header className="flex items-center justify-between py-4 mb-6">
             <div className="flex items-center gap-3">
@@ -106,15 +106,15 @@ function App() {
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-lg text-blue-700">Equipo 1</h3>
-                  <Timer 
-                    timeLeft={gameState.team1.timeLeft} 
+                  <Timer
+                    timeLeft={gameState.team1.timeLeft}
                     isRunning={gameState.team1.isTimerRunning}
                     team={1}
                     isActive={gameState.currentTeam === 1}
                   />
                 </div>
                 <div className="flex justify-center">
-                  <Rosco 
+                  <Rosco
                     words={gameState.rosco1}
                     currentLetterIndex={gameState.team1.currentLetterIndex}
                     team={1}
@@ -123,10 +123,11 @@ function App() {
                   />
                 </div>
                 <div className="mt-4">
-                  <DefinitionCard 
+                  <DefinitionCard
                     word={getCurrentWord(1)}
                     team={1}
                     isActive={gameState.currentTeam === 1}
+                    forceShow={true}
                   />
                 </div>
               </div>
@@ -135,15 +136,15 @@ function App() {
               <div className="bg-white rounded-2xl p-6 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-lg text-orange-700">Equipo 2</h3>
-                  <Timer 
-                    timeLeft={gameState.team2.timeLeft} 
+                  <Timer
+                    timeLeft={gameState.team2.timeLeft}
                     isRunning={gameState.team2.isTimerRunning}
                     team={2}
                     isActive={gameState.currentTeam === 2}
                   />
                 </div>
                 <div className="flex justify-center">
-                  <Rosco 
+                  <Rosco
                     words={gameState.rosco2}
                     currentLetterIndex={gameState.team2.currentLetterIndex}
                     team={2}
@@ -152,10 +153,11 @@ function App() {
                   />
                 </div>
                 <div className="mt-4">
-                  <DefinitionCard 
+                  <DefinitionCard
                     word={getCurrentWord(2)}
                     team={2}
                     isActive={gameState.currentTeam === 2}
+                    forceShow={true}
                   />
                 </div>
               </div>
@@ -163,7 +165,7 @@ function App() {
           )}
 
           <div className="flex justify-center">
-            <AdminPanel 
+            <AdminPanel
               onCreateRosco={createRosco}
               onResetGame={resetGame}
               isGameActive={gameState?.isActive || false}
@@ -192,7 +194,7 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
         <ConnectionStatus isConnected={isConnected} />
-        
+
         <div className="max-w-4xl mx-auto">
           <header className="flex items-center justify-between py-4 mb-6">
             <div className="flex items-center gap-3">
@@ -227,8 +229,8 @@ function App() {
             <div className="space-y-6">
               {/* Timer y Score */}
               <div className="flex justify-center">
-                <Timer 
-                  timeLeft={gameState.team1.timeLeft} 
+                <Timer
+                  timeLeft={gameState.team1.timeLeft}
                   isRunning={gameState.team1.isTimerRunning}
                   team={1}
                   isActive={gameState.currentTeam === 1}
@@ -237,7 +239,7 @@ function App() {
 
               {/* Rosco */}
               <div className="flex justify-center">
-                <Rosco 
+                <Rosco
                   words={gameState.rosco1}
                   currentLetterIndex={gameState.team1.currentLetterIndex}
                   team={1}
@@ -248,7 +250,7 @@ function App() {
 
               {/* Definición */}
               <div className="flex justify-center">
-                <DefinitionCard 
+                <DefinitionCard
                   word={getCurrentWord(1)}
                   team={1}
                   isActive={gameState.currentTeam === 1}
@@ -257,7 +259,7 @@ function App() {
 
               {/* Controles */}
               <div className="flex justify-center">
-                <PlayerControls 
+                <PlayerControls
                   team={1}
                   isActive={gameState.currentTeam === 1}
                   onGuess={(guess) => handleGuess(1, guess)}
@@ -276,7 +278,7 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 p-4">
         <ConnectionStatus isConnected={isConnected} />
-        
+
         <div className="max-w-4xl mx-auto">
           <header className="flex items-center justify-between py-4 mb-6">
             <div className="flex items-center gap-3">
@@ -311,8 +313,8 @@ function App() {
             <div className="space-y-6">
               {/* Timer y Score */}
               <div className="flex justify-center">
-                <Timer 
-                  timeLeft={gameState.team2.timeLeft} 
+                <Timer
+                  timeLeft={gameState.team2.timeLeft}
                   isRunning={gameState.team2.isTimerRunning}
                   team={2}
                   isActive={gameState.currentTeam === 2}
@@ -321,7 +323,7 @@ function App() {
 
               {/* Rosco */}
               <div className="flex justify-center">
-                <Rosco 
+                <Rosco
                   words={gameState.rosco2}
                   currentLetterIndex={gameState.team2.currentLetterIndex}
                   team={2}
@@ -332,7 +334,7 @@ function App() {
 
               {/* Definición */}
               <div className="flex justify-center">
-                <DefinitionCard 
+                <DefinitionCard
                   word={getCurrentWord(2)}
                   team={2}
                   isActive={gameState.currentTeam === 2}
@@ -341,7 +343,7 @@ function App() {
 
               {/* Controles */}
               <div className="flex justify-center">
-                <PlayerControls 
+                <PlayerControls
                   team={2}
                   isActive={gameState.currentTeam === 2}
                   onGuess={(guess) => handleGuess(2, guess)}
@@ -360,7 +362,7 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-4">
         <ConnectionStatus isConnected={isConnected} />
-        
+
         <div className="max-w-7xl mx-auto">
           <header className="flex items-center justify-between py-4 mb-6">
             <div className="flex items-center gap-3">
@@ -387,7 +389,7 @@ function App() {
             <>
               {/* Scoreboard */}
               <div className="flex justify-center mb-6">
-                <ScoreBoard 
+                <ScoreBoard
                   team1Correct={gameState.team1.correct}
                   team1Wrong={gameState.team1.wrong}
                   team2Correct={gameState.team2.correct}
@@ -404,15 +406,15 @@ function App() {
                 )}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-xl text-blue-700">Equipo 1</h3>
-                    <Timer 
-                      timeLeft={gameState.team1.timeLeft} 
+                    <Timer
+                      timeLeft={gameState.team1.timeLeft}
                       isRunning={gameState.team1.isTimerRunning}
                       team={1}
                       isActive={gameState.currentTeam === 1}
                     />
                   </div>
                   <div className="flex justify-center mb-4">
-                    <Rosco 
+                    <Rosco
                       words={gameState.rosco1}
                       currentLetterIndex={gameState.team1.currentLetterIndex}
                       team={1}
@@ -420,10 +422,11 @@ function App() {
                       size="medium"
                     />
                   </div>
-                  <DefinitionCard 
+                  <DefinitionCard
                     word={getCurrentWord(1)}
                     team={1}
                     isActive={gameState.currentTeam === 1}
+                    forceShow={true}
                   />
                 </div>
 
@@ -434,15 +437,15 @@ function App() {
                 )}>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-xl text-orange-700">Equipo 2</h3>
-                    <Timer 
-                      timeLeft={gameState.team2.timeLeft} 
+                    <Timer
+                      timeLeft={gameState.team2.timeLeft}
                       isRunning={gameState.team2.isTimerRunning}
                       team={2}
                       isActive={gameState.currentTeam === 2}
                     />
                   </div>
                   <div className="flex justify-center mb-4">
-                    <Rosco 
+                    <Rosco
                       words={gameState.rosco2}
                       currentLetterIndex={gameState.team2.currentLetterIndex}
                       team={2}
@@ -450,7 +453,7 @@ function App() {
                       size="medium"
                     />
                   </div>
-                  <DefinitionCard 
+                  <DefinitionCard
                     word={getCurrentWord(2)}
                     team={2}
                     isActive={gameState.currentTeam === 2}

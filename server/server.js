@@ -152,6 +152,7 @@ io.on('connection', (socket) => {
       letter: LETTERS[index],
       word: item.word.toUpperCase(),
       definition: item.definition,
+      type: item.type || 'starts',
       status: 'pending' // pending, correct, wrong, passed
     }));
 
@@ -159,6 +160,7 @@ io.on('connection', (socket) => {
       letter: LETTERS[index],
       word: item.word.toUpperCase(),
       definition: item.definition,
+      type: item.type || 'starts',
       status: 'pending'
     }));
 
