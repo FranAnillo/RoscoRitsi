@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { Play, RotateCcw, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { Play, RotateCcw, Plus, Trash2, CheckCircle, Pause, PlayCircle } from 'lucide-react';
 import Papa from 'papaparse';
 import { LETTERS } from '@/types/game';
 import type { RoscoInput } from '@/types/game';
@@ -14,9 +14,11 @@ interface AdminPanelProps {
   onCreateRosco: (rosco1: RoscoInput[], rosco2: RoscoInput[]) => void;
   onResetGame: () => void;
   isGameActive: boolean;
+  isPaused: boolean;
+  onTogglePause: () => void;
 }
 
-export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPanelProps) {
+export function AdminPanel({ onCreateRosco, onResetGame, isGameActive, isPaused, onTogglePause }: AdminPanelProps) {
   const [rosco1, setRosco1] = useState<RoscoInput[]>(
     LETTERS.map(() => ({ word: '', definition: '', type: 'starts' }))
   );
@@ -304,14 +306,34 @@ export function AdminPanel({ onCreateRosco, onResetGame, isGameActive }: AdminPa
             <p className="text-gray-600 mb-6">
               El rosco ha sido creado y los equipos están jugando.
             </p>
-            <Button
-              onClick={onResetGame}
-              variant="destructive"
-              size="lg"
-            >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Reiniciar Juego
-            </Button>
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={onTogglePause}
+                variant={isPaused ? "default" : "secondary"}
+                size="lg"
+                className={isPaused ? "bg-green-600 hover:bg-green-700 text-white" : "bg-yellow-500 hover:bg-yellow-600 text-white"}
+              >
+                {isPaused ? (
+                  <>
+                    <PlayCircle className="w-5 h-5 mr-2" />
+                    Reanudar
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-5 h-5 mr-2" />
+                    Pausar
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={onResetGame}
+                variant="destructive"
+                size="lg"
+              >
+                <RotateCcw className="w-5 h-5 mr-2" />
+                Reiniciar Juego
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

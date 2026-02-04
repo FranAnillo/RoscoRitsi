@@ -25,6 +25,7 @@ export interface GameState {
   team1: TeamState;
   team2: TeamState;
   winner: 1 | 2 | null;
+  isPaused: boolean;
 }
 
 export interface RoscoInput {

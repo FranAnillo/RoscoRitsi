@@ -45,7 +45,8 @@ const gameState = {
     isTimerRunning: false,
     completed: false
   },
-  winner: null
+  winner: null,
+  isPaused: false
 };
 
 // Temporizadores
@@ -57,6 +58,24 @@ const LETTERS = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
   'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
 ];
+
+// Funciones helper
+const findNextPendingIndex = (rosco, startIndex) => {
+  const len = LETTERS.length;
+  // Buscar desde la siguiente posición hasta el final
+  for (let i = startIndex + 1; i < len; i++) {
+    if (rosco[i].status === 'pending' || rosco[i].status === 'passed') {
+      return i;
+    }
+  }
+  // Si no encuentra, dar la vuelta y buscar desde el principio hasta el índice actual
+  for (let i = 0; i <= startIndex; i++) {
+    if (rosco[i].status === 'pending' || rosco[i].status === 'passed') {
+      return i;
+    }
+  }
+  return -1; // No quedan palabras pendientes
+};
 
 // Funciones helper
 const startTimer = (team) => {
@@ -134,8 +153,24 @@ const switchTeam = () => {
 io.on('connection', (socket) => {
   console.log('Usuario conectado:', socket.id);
 
-  // Enviar estado actual
+  // Enviar estado actual (asegurar que se envía isPaused)
   socket.emit('gameState', gameState);
+
+  // Toggle Pausa
+  socket.on('togglePause', () => {
+    if (!gameState.isActive) return;
+
+    if (gameState.isPaused) {
+      // Reanudar
+      gameState.isPaused = false;
+      startTimer(gameState.currentTeam);
+    } else {
+      // Pausar
+      gameState.isPaused = true;
+      stopAllTimers();
+    }
+    io.emit('gameState', gameState);
+  });
 
   // Administrador crea un nuevo rosco
   socket.on('createRosco', (data) => {
@@ -183,6 +218,7 @@ io.on('connection', (socket) => {
       completed: false
     };
     gameState.winner = null;
+    gameState.isPaused = false;
 
     stopAllTimers();
 
@@ -199,23 +235,37 @@ io.on('connection', (socket) => {
     const roscoKey = team === 1 ? 'rosco1' : 'rosco2';
     const currentIndex = gameState[teamKey].currentLetterIndex;
 
-    if (!gameState.isActive || gameState.currentTeam !== team) return;
+    if (!gameState.isActive || gameState.currentTeam !== team || gameState.isPaused) return;
     if (currentIndex >= LETTERS.length) return;
 
     const currentWord = gameState[roscoKey][currentIndex];
     const normalizedGuess = guess.trim().toUpperCase();
+
+    // Si la palabra ya fue respondida (no debería pasar, pero por seguridad)
+    if (currentWord.status === 'correct' || currentWord.status === 'wrong') {
+      // Buscar siguiente palabra pendiente
+      const nextIndex = findNextPendingIndex(gameState[roscoKey], currentIndex);
+      if (nextIndex !== -1) {
+        gameState[teamKey].currentLetterIndex = nextIndex;
+        io.emit('gameState', gameState);
+      } else {
+        gameState[teamKey].completed = true;
+        checkWinner();
+      }
+      return;
+    }
 
     if (normalizedGuess === currentWord.word) {
       // Acierto
       currentWord.status = 'correct';
       gameState[teamKey].correct++;
 
-      // Avanzar a la siguiente letra pendiente
-      let nextIndex = currentIndex + 1;
-      while (nextIndex < LETTERS.length && gameState[roscoKey][nextIndex].status !== 'pending') {
-        nextIndex++;
+      // Avanzar a la siguiente letra pendiente (circular)
+      const nextIndex = findNextPendingIndex(gameState[roscoKey], currentIndex);
+
+      if (nextIndex !== -1) {
+        gameState[teamKey].currentLetterIndex = nextIndex;
       }
-      gameState[teamKey].currentLetterIndex = nextIndex;
 
       io.emit('correctGuess', {
         team,
@@ -225,7 +275,7 @@ io.on('connection', (socket) => {
       });
 
       // Verificar si completó el rosco
-      if (nextIndex >= LETTERS.length || gameState[teamKey].correct + gameState[teamKey].wrong >= LETTERS.length) {
+      if (nextIndex === -1) {
         gameState[teamKey].completed = true;
         checkWinner();
       }
@@ -234,12 +284,12 @@ io.on('connection', (socket) => {
       currentWord.status = 'wrong';
       gameState[teamKey].wrong++;
 
-      // Avanzar a la siguiente letra pendiente
-      let nextIndex = currentIndex + 1;
-      while (nextIndex < LETTERS.length && gameState[roscoKey][nextIndex].status !== 'pending') {
-        nextIndex++;
+      // Avanzar a la siguiente letra pendiente (circular)
+      const nextIndex = findNextPendingIndex(gameState[roscoKey], currentIndex);
+
+      if (nextIndex !== -1) {
+        gameState[teamKey].currentLetterIndex = nextIndex;
       }
-      gameState[teamKey].currentLetterIndex = nextIndex;
 
       io.emit('wrongGuess', {
         team,
@@ -248,9 +298,14 @@ io.on('connection', (socket) => {
         gameState
       });
 
-      // Cambiar turno al otro equipo
-      switchTeam();
-      startTimer(gameState.currentTeam);
+      if (nextIndex === -1) {
+        gameState[teamKey].completed = true;
+        checkWinner();
+      } else {
+        // Cambiar turno al otro equipo
+        switchTeam();
+        startTimer(gameState.currentTeam);
+      }
     }
   });
 
@@ -261,18 +316,22 @@ io.on('connection', (socket) => {
     const roscoKey = team === 1 ? 'rosco1' : 'rosco2';
     const currentIndex = gameState[teamKey].currentLetterIndex;
 
-    if (!gameState.isActive || gameState.currentTeam !== team) return;
+    if (!gameState.isActive || gameState.currentTeam !== team || gameState.isPaused) return;
     if (currentIndex >= LETTERS.length) return;
 
     const currentWord = gameState[roscoKey][currentIndex];
-    currentWord.status = 'passed';
 
-    // Avanzar a la siguiente letra pendiente
-    let nextIndex = currentIndex + 1;
-    while (nextIndex < LETTERS.length && gameState[roscoKey][nextIndex].status !== 'pending') {
-      nextIndex++;
+    // Solo marcar como 'passed' si estaba 'pending'
+    if (currentWord.status === 'pending') {
+      currentWord.status = 'passed';
     }
-    gameState[teamKey].currentLetterIndex = nextIndex;
+
+    // Avanzar a la siguiente letra pendiente (circular)
+    const nextIndex = findNextPendingIndex(gameState[roscoKey], currentIndex);
+
+    if (nextIndex !== -1) {
+      gameState[teamKey].currentLetterIndex = nextIndex;
+    }
 
     io.emit('wordPassed', {
       team,
@@ -280,9 +339,14 @@ io.on('connection', (socket) => {
       gameState
     });
 
-    // Cambiar turno al otro equipo
-    switchTeam();
-    startTimer(gameState.currentTeam);
+    if (nextIndex === -1) {
+      gameState[teamKey].completed = true;
+      checkWinner();
+    } else {
+      // Cambiar turno al otro equipo
+      switchTeam();
+      startTimer(gameState.currentTeam);
+    }
   });
 
   // Administrador reinicia el juego
@@ -309,6 +373,7 @@ io.on('connection', (socket) => {
       completed: false
     };
     gameState.winner = null;
+    gameState.isPaused = false;
 
     io.emit('gameReset');
   });

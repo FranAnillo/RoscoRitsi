@@ -23,7 +23,8 @@ function App() {
     createRosco,
     guessWord,
     passWord,
-    resetGame
+    resetGame,
+    togglePause
   } = useSocket();
 
   // Efectos de sonido
@@ -169,6 +170,8 @@ function App() {
               onCreateRosco={createRosco}
               onResetGame={resetGame}
               isGameActive={gameState?.isActive || false}
+              isPaused={gameState?.isPaused || false}
+              onTogglePause={togglePause}
             />
           </div>
 
@@ -261,7 +264,7 @@ function App() {
               <div className="flex justify-center">
                 <PlayerControls
                   team={1}
-                  isActive={gameState.currentTeam === 1}
+                  isActive={gameState.currentTeam === 1 && !gameState.isPaused}
                   onGuess={(guess) => handleGuess(1, guess)}
                   onPass={() => handlePass(1)}
                 />
@@ -345,7 +348,7 @@ function App() {
               <div className="flex justify-center">
                 <PlayerControls
                   team={2}
-                  isActive={gameState.currentTeam === 2}
+                  isActive={gameState.currentTeam === 2 && !gameState.isPaused}
                   onGuess={(guess) => handleGuess(2, guess)}
                   onPass={() => handlePass(2)}
                 />
@@ -475,6 +478,13 @@ function App() {
               team2TimeLeft={gameState.team2.timeLeft}
               onReset={resetGame}
             />
+          )}
+          {gameState?.isPaused && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
+              <div className="bg-yellow-500 text-white px-8 py-4 rounded-full text-2xl font-bold animate-pulse shadow-xl border-4 border-white transform -rotate-3">
+                ⚠️ JUEGO PAUSADO
+              </div>
+            </div>
           )}
         </div>
       </div>

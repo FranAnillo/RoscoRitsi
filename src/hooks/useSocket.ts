@@ -111,6 +111,10 @@ export function useSocket() {
     socketRef.current?.emit('nextLetter', { team });
   }, []);
 
+  const togglePause = useCallback(() => {
+    socketRef.current?.emit('togglePause');
+  }, []);
+
   return {
     socket: socketRef.current,
     isConnected,
@@ -120,6 +124,7 @@ export function useSocket() {
     guessWord,
     passWord,
     resetGame,
-    nextLetter
+    nextLetter,
+    togglePause
   };
 }
