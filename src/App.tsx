@@ -32,10 +32,10 @@ function App() {
     if (!soundEnabled) return;
 
     const sounds = {
-      correct: 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3',
-      wrong: 'https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3',
-      pass: 'https://www.soundjay.com/misc/sounds/whoosh.mp3',
-      win: 'https://www.soundjay.com/misc/sounds/success-fanfare-trumpets-01.mp3'
+      correct: 'https://www.soundjay.com/misc_c2026/sounds/bell-ring-01.mp3',
+      wrong: 'https://www.soundjay.com/misc_c2026/sounds/fail-buzzer-02.mp3',
+      pass: 'https://www.soundjay.com/buttons_c2026/sounds/button-1.mp3',
+      win: 'https://www.soundjay.com/human_c2026/sounds/applause-01.mp3'
     };
 
     const audio = new Audio(sounds[type]);
