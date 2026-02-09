@@ -33,7 +33,7 @@ const gameState = {
     currentLetterIndex: 0,
     correct: 0,
     wrong: 0,
-    timeLeft: 300, // 5 minutos en segundos
+    timeLeft: 420, // 5 minutos en segundos
     isTimerRunning: false,
     completed: false
   },
@@ -41,7 +41,7 @@ const gameState = {
     currentLetterIndex: 0,
     correct: 0,
     wrong: 0,
-    timeLeft: 300,
+    timeLeft: 420,
     isTimerRunning: false,
     completed: false
   },
