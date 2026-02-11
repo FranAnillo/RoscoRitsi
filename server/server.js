@@ -94,7 +94,21 @@ const startTimer = (team) => {
       clearInterval(timer);
       gameState[teamKey].isTimerRunning = false;
       gameState[teamKey].completed = true;
-      checkWinner();
+      
+      // Check if both completed
+      const otherTeam = team === 1 ? 2 : 1;
+      const otherTeamKey = otherTeam === 1 ? 'team1' : 'team2';
+      const otherCompleted = gameState[otherTeamKey].completed ||
+        gameState[otherTeamKey].correct + gameState[otherTeamKey].wrong >= LETTERS.length;
+      
+      if (otherCompleted) {
+        checkWinner();
+      } else {
+        // Switch to the other team so they can keep playing
+        gameState.currentTeam = otherTeam;
+        io.emit('gameState', gameState);
+        startTimer(otherTeam);
+      }
     }
   }, 1000);
 
@@ -277,7 +291,18 @@ io.on('connection', (socket) => {
       // Verificar si completó el rosco
       if (nextIndex === -1) {
         gameState[teamKey].completed = true;
-        checkWinner();
+        const otherTeam = team === 1 ? 2 : 1;
+        const otherTeamKey = otherTeam === 1 ? 'team1' : 'team2';
+        const otherCompleted = gameState[otherTeamKey].completed ||
+          gameState[otherTeamKey].correct + gameState[otherTeamKey].wrong >= LETTERS.length;
+        if (otherCompleted) {
+          checkWinner();
+        } else {
+          // Switch to the other team so they can keep playing
+          stopTimer(team);
+          switchTeam();
+          startTimer(gameState.currentTeam);
+        }
       }
     } else {
       // Fallo - rebote al otro equipo
@@ -299,12 +324,33 @@ io.on('connection', (socket) => {
       });
 
       if (nextIndex === -1) {
+        // This team completed all questions
         gameState[teamKey].completed = true;
-        checkWinner();
+        const otherTeam = team === 1 ? 2 : 1;
+        const otherTeamKey = otherTeam === 1 ? 'team1' : 'team2';
+        const otherCompleted = gameState[otherTeamKey].completed ||
+          gameState[otherTeamKey].correct + gameState[otherTeamKey].wrong >= LETTERS.length;
+        if (otherCompleted) {
+          checkWinner();
+        } else {
+          // Switch to the other team so they can keep playing
+          switchTeam();
+          startTimer(gameState.currentTeam);
+        }
       } else {
-        // Cambiar turno al otro equipo
-        switchTeam();
-        startTimer(gameState.currentTeam);
+        // Check if the other team is already completed
+        const otherTeam = team === 1 ? 2 : 1;
+        const otherTeamKey = otherTeam === 1 ? 'team1' : 'team2';
+        const otherCompleted = gameState[otherTeamKey].completed ||
+          gameState[otherTeamKey].correct + gameState[otherTeamKey].wrong >= LETTERS.length;
+        if (otherCompleted) {
+          // Other team is done, stay on current team
+          io.emit('gameState', gameState);
+        } else {
+          // Cambiar turno al otro equipo
+          switchTeam();
+          startTimer(gameState.currentTeam);
+        }
       }
     }
   });
@@ -340,12 +386,33 @@ io.on('connection', (socket) => {
     });
 
     if (nextIndex === -1) {
+      // This team completed all questions
       gameState[teamKey].completed = true;
-      checkWinner();
+      const otherTeam = team === 1 ? 2 : 1;
+      const otherTeamKey = otherTeam === 1 ? 'team1' : 'team2';
+      const otherCompleted = gameState[otherTeamKey].completed ||
+        gameState[otherTeamKey].correct + gameState[otherTeamKey].wrong >= LETTERS.length;
+      if (otherCompleted) {
+        checkWinner();
+      } else {
+        // Switch to the other team so they can keep playing
+        switchTeam();
+        startTimer(gameState.currentTeam);
+      }
     } else {
-      // Cambiar turno al otro equipo
-      switchTeam();
-      startTimer(gameState.currentTeam);
+      // Check if the other team is already completed
+      const otherTeam = team === 1 ? 2 : 1;
+      const otherTeamKey = otherTeam === 1 ? 'team1' : 'team2';
+      const otherCompleted = gameState[otherTeamKey].completed ||
+        gameState[otherTeamKey].correct + gameState[otherTeamKey].wrong >= LETTERS.length;
+      if (otherCompleted) {
+        // Other team is done, stay on current team
+        io.emit('gameState', gameState);
+      } else {
+        // Cambiar turno al otro equipo
+        switchTeam();
+        startTimer(gameState.currentTeam);
+      }
     }
   });
 
